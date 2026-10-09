@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRACE — UI Analysis & Calendar Dashboard Design</title>
+<style>
+:root {
+  --ink: #17231f; --muted: #66736c; --green: #2f6f5e;
+  --pale: #e8f1ec; --line: #dce6df; --warm: #f5efe5; --white: #fff;
+  --bg: #f9f7f3; --card: #fff; --shadow: 0 2px 12px rgba(23,35,31,0.08);
+  --radius: 18px; --max: 1100px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--ink); line-height: 1.6; }
+.container { max-width: var(--max); margin: 0 auto; padding: 32px 24px; }
+
+/* Header */
+.hero { background: linear-gradient(135deg, var(--green), #1d5549); color: #fff; border-radius: 28px; padding: 40px 36px; margin-bottom: 40px; position: relative; overflow: hidden; }
+.hero::after { content: ''; position: absolute; right: -40px; top: -40px; width: 260px; height: 260px; border-radius: 50%; background: rgba(255,255,255,0.06); }
+.hero h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.5px; }
+.hero p { color: #b9d1c4; margin-top: 6px; font-size: 15px; }
+.badge { display: inline-block; background: rgba(255,255,255,0.18); border-radius: 8px; padding: 4px 12px; font-size: 12px; font-weight: 700; letter-spacing: 1px; margin-bottom: 14px; }
+
+/* Section */
+h2 { font-size: 22px; font-weight: 800; margin: 40px 0 20px; color: var(--ink); }
+h2 span { color: var(--green); }
+.section-desc { color: var(--muted); margin-bottom: 24px; font-size: 15px; }
+
+/* Cards */
+.card { background: var(--card); border-radius: var(--radius); border: 1px solid var(--line); box-shadow: var(--shadow); padding: 28px; margin-bottom: 20px; }
+.card h3 { font-size: 16px; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+.card h3 .icon { font-size: 22px; }
+
+/* Lists */
+ol, ul { padding-left: 24px; }
+li { margin-bottom: 12px; font-size: 15px; color: var(--ink); }
+li strong { color: var(--green); font-weight: 700; }
+li code { background: var(--pale); border-radius: 6px; padding: 2px 8px; font-size: 13px; font-weight: 600; }
+.sublist { margin-top: 6px; }
+.sublist li { font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+
+/* Priority tags */
+.tag { display: inline-block; border-radius: 6px; padding: 2px 10px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; margin-right: 6px; vertical-align: middle; }
+.tag-critical { background: #fde8e8; color: #b91c1c; }
+.tag-high { background: #fef3c7; color: #92400e; }
+.tag-medium { background: #dbeafe; color: #1e40af; }
+.tag-low { background: #e8f1ec; color: var(--green); }
+
+/* Grid */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 768px) { .grid2 { grid-template-columns: 1fr; } }
+
+/* Calendar */
+.cal-wrap { background: var(--card); border-radius: var(--radius); border: 1px solid var(--line); box-shadow: var(--shadow); padding: 28px; margin-bottom: 20px; }
+.cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.cal-header h3 { font-size: 20px; font-weight: 800; margin: 0; }
+.cal-nav { display: flex; gap: 8px; }
+.cal-nav button { background: var(--pale); border: none; border-radius: 10px; width: 38px; height: 38px; font-size: 18px; cursor: pointer; color: var(--green); font-weight: 700; transition: background 0.15s; }
+.cal-nav button:hover { background: var(--green); color: #fff; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.cal-day-name { text-align: center; font-size: 12px; font-weight: 700; color: var(--muted); padding: 6px 0; text-transform: uppercase; letter-spacing: 1px; }
+.cal-day { min-height: 80px; border-radius: 14px; padding: 8px; cursor: pointer; transition: all 0.18s; position: relative; background: var(--white); border: 1px solid transparent; }
+.cal-day:hover { border-color: var(--green); transform: translateY(-2px); box-shadow: 0 4px 14px rgba(47,111,94,0.12); }
+.cal-day.today { border-color: var(--green); border-width: 2px; background: #f0f8f4; }
+.cal-day.selected { background: var(--green); color: #fff; border-color: var(--green); }
+.cal-day.selected .day-muted { color: #b9d1c4; }
+.cal-day.selected .day-apps { color: #d8eadc; }
+.cal-day.empty { background: transparent; cursor: default; border: none; min-height: 40px; }
+.cal-day.empty:hover { transform: none; box-shadow: none; }
+.day-num { font-size: 14px; font-weight: 800; margin-bottom: 2px; }
+.day-total { font-size: 11px; font-weight: 700; color: var(--green); }
+.day-apps { font-size: 10px; color: var(--muted); }
+.day-bar { height: 4px; border-radius: 2px; background: var(--pale); margin-top: 4px; overflow: hidden; }
+.day-bar-fill { height: 100%; border-radius: 2px; background: var(--green); transition: width 0.3s ease; }
+.day-muted { font-size: 10px; color: var(--muted); }
+
+/* Detail panel */
+.detail { display: none; background: var(--card); border-radius: var(--radius); border: 1px solid var(--line); box-shadow: var(--shadow); overflow: hidden; }
+.detail.active { display: block; }
+.detail-header { background: var(--green); color: #fff; padding: 24px 28px; }
+.detail-header h3 { font-size: 20px; font-weight: 800; margin: 0; }
+.detail-header .day-stats { display: flex; gap: 24px; margin-top: 10px; font-size: 13px; color: #b9d1c4; }
+.detail-header .day-stats strong { color: #fff; font-size: 22px; display: block; }
+.detail-body { padding: 20px 28px; }
+.app-row { display: flex; align-items: center; padding: 14px 0; border-bottom: 1px solid #e9f0eb; gap: 14px; }
+.app-row:last-child { border-bottom: none; }
+.app-avatar { width: 44px; height: 44px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; flex-shrink: 0; }
+.app-info { flex: 1; min-width: 0; }
+.app-name { font-size: 15px; font-weight: 700; }
+.app-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.app-time { font-size: 15px; font-weight: 800; white-space: nowrap; }
+.app-bar-wrap { width: 100%; height: 6px; background: #eef3ef; border-radius: 3px; margin-top: 6px; overflow: hidden; }
+.app-bar { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+.detail-empty { padding: 40px; text-align: center; color: var(--muted); font-size: 14px; }
+
+/* Roadmap table */
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { background: var(--pale); font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; padding: 12px 16px; text-align: left; border-bottom: 2px solid var(--line); }
+td { padding: 12px 16px; border-bottom: 1px solid #eef3ef; vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+.phase { font-weight: 800; color: var(--green); white-space: nowrap; }
+
+/* Footer */
+.footer { text-align: center; margin-top: 48px; padding: 24px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- Hero -->
+<div class="hero">
+  <div class="badge">TRACE APP USAGE TRACKER</div>
+  <h1>UI Analysis &amp; Calendar Dashboard</h1>
+  <p>วิเคราะห์ 4 หน้าปัจจุบัน + ออกแบบหน้า Dashboard ปฏิทิน — v2.0, Oct 2026 (Calendar สร้างจริงแล้ว, Export/Import ตัดออก)</p>
+</div>
+
+<!-- Delivered status -->
+<div class="card">
+  <h3><span class="icon">✅</span> Delivered 04 Oct 2026 — สถานะงานที่ทำเสร็จ</h3>
+  <ol>
+    <li><strong>Calendar tab</strong> — month grid + day detail + 24h timeline + top apps <span class="tag tag-medium">DONE</span></li>
+    <li><strong>Today</strong> — yesterday +/-, 7-day sparkline, category stacked bar, insight card <span class="tag tag-medium">DONE</span></li>
+    <li><strong>Apps</strong> — search, sort x4, category filter, per-app detail <span class="tag tag-medium">DONE</span></li>
+    <li><strong>History</strong> — SectionList virtualized, session overlay, pull-to-refresh <span class="tag tag-medium">DONE</span></li>
+    <li><strong>Settings</strong> — dark mode, daily notification (live total), retention prune, TH/EN, debug <span class="tag tag-medium">DONE</span></li>
+    <li><strong>Freeze fixes</strong> — stagger cap, top-20 lists, refresh guard, memo total <span class="tag tag-medium">DONE</span></li>
+    <li><strong>Data quality</strong> — launcher blocklist + launchable allowlist, 30s coalesce (JS+Kotlin), com.* filter, delta sync (lastSync), screen-off subtraction, 2000-session cap <span class="tag tag-medium">DONE</span></li>
+    <li><strong>Safe-area</strong> — SafeAreaProvider + insets + edge-to-edge <span class="tag tag-medium">DONE</span></li>
+    <li><strong>Round 2 fixes</strong> — overlay view-app from all days, calendar Today button, notification deep-link to Today, stale-data banner on revoked permission, accessibility labels, vitest suite (10 tests) <span class="tag tag-medium">DONE</span></li>
+    <li><strong>Not done</strong> — peak-hour indicator, per-app usage limit alerts, real app icons (no Expo API), DateTimePicker dep (month nav covers it), SQLite migration, Expo Router split, background sync <span class="tag tag-low">LATER</span></li>
+  </ol>
+</div>
+
+<!-- ====== ANALYSIS: 4 PAGES ====== -->
+<h2><span>01</span> Today — หน้าวันนี้</h2>
+<p class="section-desc">สิ่งที่มีแล้ว vs สิ่งที่ควรเพิ่ม</p>
+
+<div class="grid2">
+<div class="card">
+  <h3><span class="icon">&#9989;</span> มีแล้ว</h3>
+  <ol>
+    <li>รวมเวลาที่ใช้ทั้งหมดวันนี้</li>
+    <li>จำนวนแอปที่เปิด / จำนวนครั้ง / เฉลี่ยต่อครั้ง</li>
+    <li>Progress bar เทียบ 3 ชม.</li>
+    <li>รายชื่อแอปเรียงตามเวลา</li>
+    <li>รีเฟรชข้อมูลจริงจาก Android</li>
+    <li>Usage Access status indicator</li>
+  </ol>
+</div>
+<div class="card">
+  <h3><span class="icon">&#10133;</span> ควรเพิ่ม</h3>
+  <ol>
+    <li><strong>Peak Hour Indicator</strong> <span class="tag tag-critical">CRITICAL</span>
+      <ul class="sublist">
+        <li>ช่วงเวลาที่ใช้มากที่สุด (เช่น 20:00–22:00)</li>
+        <li>แสดงเป็น badge สี + label ช่วงเวลา</li>
+      </ul>
+    </li>
+    <li><strong>เปรียบเทียบกับเมื่อวาน</strong> <span class="tag tag-high">HIGH</span>
+      <ul class="sublist">
+        <li>+/- % เทียบเมื่อวาน, สีเขียว/แดง</li>
+        <li>Sparkline mini chart 7 วันย้อนหลัง</li>
+      </ul>
+    </li>
+    <li><strong>Top Category Breakdown</strong> <span class="tag tag-medium">MED</span>
+      <ul class="sublist">
+        <li>แบ่งหมวด: Social / Games / Productivity / Other</li>
+        <li>Horizontal stacked bar</li>
+      </ul>
+    </li>
+    <li><strong>Quick Insight Card</strong> <span class="tag tag-medium">MED</span>
+      <ul class="sublist">
+        <li>"วันนี้ใช้ Social Media 45 นาที (+22% จากเมื่อวาน)"</li>
+        <li>เปลี่ยนทุกครั้งที่ refresh</li>
+      </ul>
+    </li>
+    <li><strong>Screen-on vs App time</strong> <span class="tag tag-low">LOW</span>
+      <ul class="sublist">
+        <li>เปรียบเทียบ screen-on กับ app usage จริง</li>
+        <li>ใช้ Battery Stats / WorkProfile API</li>
+      </ul>
+    </li>
+  </ol>
+</div>
+</div>
+
+<h2><span>02</span> Apps — หน้าแอปที่ใช้</h2>
+<p class="section-desc">รายการแอปเรียงตามเวลาที่ใช้วันนี้</p>
+
+<div class="grid2">
+<div class="card">
+  <h3><span class="icon">&#9989;</span> มีแล้ว</h3>
+  <ol>
+    <li>App name + launches + last opened</li>
+    <li>Total time per app</li>
+    <li>เรียงตาม total time มาก→น้อย</li>
+  </ol>
+</div>
+<div class="card">
+  <h3><span class="icon">&#10133;</span> ควรเพิ่ม</h3>
+  <ol>
+    <li><strong>Per-app Detail Screen</strong> <span class="tag tag-critical">CRITICAL</span>
+      <ul class="sublist">
+        <li>แตะแอป → เข้าหน้ารายละเอียด</li>
+        <li>Sessions list, daily trend graph, average duration</li>
+        <li>Usage limit set/notify (future)</li>
+      </ul>
+    </li>
+    <li><strong>App Categories / Tags</strong> <span class="tag tag-high">HIGH</span>
+      <ul class="sublist">
+        <li>Auto-detect จาก package name หรือ user ตั้งเอง</li>
+        <li>Filter by category, group view</li>
+      </ul>
+    </li>
+    <li><strong>Weekly / Monthly Trend per App</strong> <span class="tag tag-high">HIGH</span>
+      <ul class="sublist">
+        <li>Mini sparkline 7 วัน</li>
+        <li>Trend up/down badge</li>
+      </ul>
+    </li>
+    <li><strong>Search / Filter</strong> <span class="tag tag-medium">MED</span>
+      <ul class="sublist">
+        <li>Search bar หาชื่อแอป</li>
+        <li>Sort: time / launches / name / last opened</li>
+      </ul>
+    </li>
+    <li><strong>App Icon Display</strong> <span class="tag tag-medium">MED</span>
+      <ul class="sublist">
+        <li>ใช้ Expo ApplicationIcon API ดึง icon จริง</li>
+        <li>fallback เป็น initial letter (ปัจจุบัน)</li>
+      </ul>
+    </li>
+    <li><strong>Usage Limit</strong> <span class="tag tag-low">LOW</span>
+      <ul class="sublist">
+        <li>ตั้ง limit ต่อแอป → notification เมื่อครบ</li>
+      </ul>
+    </li>
+  </ol>
+</div>
+</div>
+
+<h2><span>03</span> History — หน้าประวัติ</h2>
+<p class="section-desc">sessions จัดกลุ่มตามวัน</p>
+
+<div class="grid2">
+<div class="card">
+  <h3><span class="icon">&#9989;</span> มีแล้ว</h3>
+  <ol>
+    <li>Sessions grouped by day</li>
+    <li>Start–end time + duration per session</li>
+  </ol>
+</div>
+<div class="card">
+  <h3><span class="icon">&#10133;</span> ควรเพิ่ม</h3>
+  <ol>
+    <li><strong>Calendar Dashboard</strong> <span class="tag tag-critical">CRITICAL</span>
+      <ul class="sublist">
+        <li>ดูข้อมูลรายเดือนเป็นปฏิทิน</li>
+        <li>คลิกวัน → ดูรายละเอียดแอป</li>
+        <li>ดีไซน์ด้านล่างนี้</li>
+      </ul>
+    </li>
+    <li><strong>Date Picker / Month Navigation</strong> <span class="tag tag-high">HIGH</span>
+      <ul class="sublist">
+        <li>เลือกวัน/เดือน/ปี</li>
+        <li>Jump to today button</li>
+      </ul>
+    </li>
+    <li><strong>Timeline View</strong> <span class="tag tag-high">HIGH</span>
+      <ul class="sublist">
+        <li>แนวนอน 24 ชม. แสดงสีแต่ละแอป</li>
+        <li>แตะช่วง → ดู session detail</li>
+      </ul>
+    </li>
+    <li><strong>Session Detail</strong> <span class="tag tag-medium">MED</span>
+      <ul class="sublist">
+        <li>แตะ session → แสดง app name, exact times, duration</li>
+        <li>Link ไปหน้า app detail</li>
+      </ul>
+    </li>
+    <li><strong>Day Summary Card</strong> <span class="tag tag-medium">MED</span>
+      <ul class="sublist">
+        <li>Total time, app count, top 3 apps ของวันนั้น</li>
+      </ul>
+    </li>
+    <li><strong>Export Selected Date</strong> <span class="tag tag-low">CUT</span>
+      <ul class="sublist">
+        <li>ตัดออกพร้อม Export/Import ทั้งระบบ — ไม่ทำแล้ว</li>
+      </ul>
+    </li>
+  </ol>
+</div>
+</div>
+
+<h2><span>04</span> Settings — หน้าตั้งค่า</h2>
+<p class="section-desc">Usage Access + Appearance + Notifications + Data + Privacy + Debug (Export/Import/Clear ตัดออกแล้ว)</p>
+
+<div class="grid2">
+<div class="card">
+  <h3><span class="icon">&#9989;</span> มีแล้ว</h3>
+  <ol>
+    <li>Usage Access status + open settings</li>
+    <li><s>Export JSON / Import JSON / Clear all data — ตัดออกแล้ว</s></li>
+    <li>Privacy statement</li>
+  </ol>
+</div>
+<div class="card">
+  <h3><span class="icon">&#10133;</span> ควรเพิ่ม</h3>
+  <ol>
+    <li><strong>Dark Mode Toggle</strong> <span class="tag tag-high">HIGH</span>
+      <ul class="sublist">
+        <li>ใช้ useColorScheme + Appearance API</li>
+        <li>Toggle in settings, persist choice</li>
+      </ul>
+    </li>
+    <li><strong>Notification Settings</strong> <span class="tag tag-medium">MED</span>
+      <ul class="sublist">
+        <li>Daily usage summary notification</li>
+        <li>Usage limit alerts</li>
+        <li>ใช้ expo-notifications</li>
+      </ul>
+    </li>
+    <li><strong>Data Retention Setting</strong> <span class="tag tag-medium">MED</span>
+      <ul class="sublist">
+        <li>7 / 30 / 90 days / unlimited</li>
+        <li>Auto-prune old sessions</li>
+      </ul>
+    </li>
+    <li><strong>Language / Locale</strong> <span class="tag tag-low">LOW</span>
+      <ul class="sublist">
+        <li>TH/EN toggle</li>
+      </ul>
+    </li>
+    <li><strong>Debug Screen</strong> <span class="tag tag-low">LOW</span>
+      <ul class="sublist">
+        <li>Raw event log, session count, storage size</li>
+        <li>สำหรับ dev / troubleshoot</li>
+      </ul>
+    </li>
+    <li><strong>Backup Auto-schedule</strong> <span class="tag tag-low">LOW</span>
+      <ul class="sublist">
+        <li><s>Auto export ทุกสัปดาห์ — ตัดออกพร้อม Export</s> (ทำ retention prune + debug screen แทน)</li>
+      </ul>
+    </li>
+  </ol>
+</div>
+</div>
+
+<!-- ====== CALENDAR DASHBOARD ====== -->
+<h2><span>05</span> Calendar Dashboard — ออกแบบใหม่</h2>
+<p class="section-desc">หน้า Dashboard ปฏิทิน — ดู usage รายเดือน + คลิกวันเพื่อดูรายละเอียดแอปทั้งหมด</p>
+
+<div class="cal-wrap">
+  <div class="cal-header">
+    <h3 id="cal-title">October 2026</h3>
+    <div class="cal-nav">
+      <button onclick="changeMonth(-1)">&#8249;</button>
+      <button onclick="goToday()">Today</button>
+      <button onclick="changeMonth(1)">&#8250;</button>
+    </div>
+  </div>
+  <div class="cal-grid" id="cal-grid"></div>
+</div>
+
+<!-- Detail panel (appears when day clicked) -->
+<div class="detail" id="detail-panel">
+  <div class="detail-header">
+    <h3 id="detail-title">—</h3>
+    <div class="day-stats">
+      <div><strong id="detail-total">—</strong>total time</div>
+      <div><strong id="detail-apps">—</strong>apps</div>
+      <div><strong id="detail-sessions">—</strong>sessions</div>
+    </div>
+  </div>
+  <div class="detail-body" id="detail-body"></div>
+</div>
+
+<!-- Design spec -->
+<h2><span>06</span> Calendar Dashboard — Design Spec</h2>
+<p class="section-desc">รายละเอียด UI สำหรับ implement</p>
+
+<div class="card">
+  <h3><span class="icon">&#127912;</span> Layout</h3>
+  <ol>
+    <li><strong>Header bar</strong>: month name + prev/next/today buttons</li>
+    <li><strong>Calendar grid</strong>: 7 columns (Sun–Sat), rows = weeks of month</li>
+    <li><strong>Each day cell</strong>:
+      <ul class="sublist">
+        <li>Day number (top-left)</li>
+        <li>Total time badge (e.g. "2h 15m") — green text</li>
+        <li>App count (e.g. "8 apps") — muted text</li>
+        <li>Progress bar 4px — fill = % of max day in month</li>
+        <li>Today: green border; Selected: green bg + white text</li>
+        <li>Empty: no bg, no hover</li>
+      </ul>
+    </li>
+    <li><strong>Detail panel</strong> (slides in below calendar on click):
+      <ul class="sublist">
+        <li>Green header: date + total time / app count / session count</li>
+        <li>App list: avatar (color-coded by category) + name + launches + duration + bar</li>
+        <li>Bar = % of max app time that day</li>
+        <li>App colors: Social=#e74c3c, Games=#9b59b6, Productivity=#3498db, Other=#95a5a6</li>
+      </ul>
+    </li>
+  </ol>
+</div>
+
+<div class="card">
+  <h3><span class="icon">&#9881;</span> Data Requirements</h3>
+  <ol>
+    <li><code>loadSessions()</code> → ได้ UsageSession[] ทั้งหมด</li>
+    <li>Group by date → สร้าง calendar data</li>
+    <li>Per day: totalSeconds, appCount, sessionCount, topApps[]</li>
+    <li>Per app in day: name, launches, totalSeconds, sessions[]</li>
+    <li>Category mapping: packageName → category (local map หรือ manual)</li>
+  </ol>
+</div>
+
+<div class="card">
+  <h3><span class="icon">&#128640;</span> Implementation Notes</h3>
+  <ol>
+    <li>ใช้ RN <code>Animated</code> + <code>useNativeDriver</code> สำหรับ transition</li>
+    <li>Calendar grid: <code>FlatList</code> หรือ <code>View</code> 7-column grid</li>
+    <li>Day cell: <code>Pressable</code> + scale feedback</li>
+    <li>Detail panel: <code>Animated.View</code> height 0→auto, opacity 0→1</li>
+    <li>App bars: <code>Animated.View</code> width 0→% (GPU rule: scaleX + translateX)</li>
+    <li>Category colors: local Map, no new dep</li>
+    <li>Add to tab nav: "today | apps | <strong>calendar</strong> | history | settings"</li>
+  </ol>
+</div>
+
+<!-- Roadmap table -->
+<h2><span>07</span> Implementation Roadmap</h2>
+<p class="section-desc">ลำดับความสำคัญสำหรับพัฒนาต่อ</p>
+
+<div class="card">
+<table>
+  <thead>
+    <tr><th>Phase</th><th>Feature</th><th>Impact</th><th>Pages</th><th>Effort</th></tr>
+  </thead>
+  <tbody>
+    <tr><td class="phase">P1</td><td>Calendar Dashboard (new tab)</td><td><span class="tag tag-critical">CRITICAL</span></td><td>New</td><td>2–3 days</td></tr>
+    <tr><td class="phase">P1</td><td>Per-app Detail Screen</td><td><span class="tag tag-critical">CRITICAL</span></td><td>Apps</td><td>1–2 days</td></tr>
+    <tr><td class="phase">P1</td><td>Date Picker / Month Nav</td><td><span class="tag tag-high">HIGH</span></td><td>History</td><td>0.5 day</td></tr>
+    <tr><td class="phase">P2</td><td>Peak Hour Indicator</td><td><span class="tag tag-high">HIGH</span></td><td>Today</td><td>0.5 day</td></tr>
+    <tr><td class="phase">P2</td><td>Yesterday Comparison</td><td><span class="tag tag-high">HIGH</span></td><td>Today</td><td>1 day</td></tr>
+    <tr><td class="phase">P2</td><td>App Categories</td><td><span class="tag tag-high">HIGH</span></td><td>Apps, Calendar</td><td>1 day</td></tr>
+    <tr><td class="phase">P2</td><td>Timeline View (24h bar)</td><td><span class="tag tag-high">HIGH</span></td><td>History</td><td>1–2 days</td></tr>
+    <tr><td class="phase">P2</td><td>Dark Mode</td><td><span class="tag tag-high">HIGH</span></td><td>Settings, All</td><td>1 day</td></tr>
+    <tr><td class="phase">P3</td><td>Weekly Sparkline per App</td><td><span class="tag tag-medium">MED</span></td><td>Apps, Today</td><td>1 day</td></tr>
+    <tr><td class="phase">P3</td><td>Search / Filter Apps</td><td><span class="tag tag-medium">MED</span></td><td>Apps</td><td>0.5 day</td></tr>
+    <tr><td class="phase">P3</td><td>Data Retention Setting</td><td><span class="tag tag-medium">MED</span></td><td>Settings</td><td>0.5 day</td></tr>
+    <tr><td class="phase">P3</td><td>Notification: Daily Summary</td><td><span class="tag tag-medium">MED</span></td><td>Settings</td><td>1 day</td></tr>
+    <tr><td class="phase">P4</td><td>App Icon Display</td><td><span class="tag tag-medium">MED</span></td><td>Apps, Calendar</td><td>0.5 day</td></tr>
+    <tr><td class="phase">P4</td><td>Usage Limit / Alerts</td><td><span class="tag tag-low">LOW</span></td><td>Apps, Settings</td><td>1–2 days</td></tr>
+    <tr><td class="phase">P4</td><td>Screen-on Comparison</td><td><span class="tag tag-low">LOW</span></td><td>Today</td><td>1 day</td></tr>
+    <tr><td class="phase">P4</td><td>Language Toggle (TH/EN)</td><td><span class="tag tag-low">LOW</span></td><td>Settings</td><td>0.5 day</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="footer">
+  TRACE App Usage Tracker — UI Analysis &amp; Calendar Dashboard Design — Generated 04 Oct 2026
+</div>
+
+</div>
+
+<script>
+const APP_COLORS = [
+  { bg: '#fde8e8', text: '#b91c1c', bar: '#e74c3c' },  // Social
+  { bg: '#f3e8ff', text: '#7c3aed', bar: '#9b59b6' },  // Games
+  { bg: '#dbeafe', text: '#1e40af', bar: '#3498db' },  // Productivity
+  { bg: '#e8f1ec', text: '#2f6f5e', bar: '#2f6f5e' },  // Other
+];
+
+const SAMPLE_DATA = {
+  1: { apps: [{ name: 'LINE', launches: 8, mins: 45, cat: 0 }, { name: 'Chrome', launches: 5, mins: 30, cat: 2 }, { name: 'YouTube', launches: 3, mins: 25, cat: 1 }, { name: 'Instagram', launches: 4, mins: 20, cat: 0 }] },
+  2: { apps: [{ name: 'Chrome', launches: 6, mins: 50, cat: 2 }, { name: 'LINE', launches: 5, mins: 35, cat: 0 }, { name: 'Spotify', launches: 2, mins: 60, cat: 1 }, { name: 'Gmail', launches: 3, mins: 15, cat: 2 }] },
+  3: { apps: [{ name: 'YouTube', launches: 4, mins: 80, cat: 1 }, { name: 'TikTok', launches: 6, mins: 40, cat: 0 }, { name: 'LINE', launches: 3, mins: 20, cat: 0 }] },
+  4: { apps: [{ name: 'Chrome', launches: 7, mins: 55, cat: 2 }, { name: 'Google Maps', launches: 2, mins: 15, cat: 2 }, { name: 'LINE', launches: 4, mins: 30, cat: 0 }, { name: 'Facebook', launches: 3, mins: 25, cat: 0 }, { name: 'Candy Crush', launches: 2, mins: 35, cat: 1 }] },
+  5: { apps: [{ name: 'Instagram', launches: 5, mins: 45, cat: 0 }, { name: 'LINE', launches: 6, mins: 40, cat: 0 }, { name: 'Netflix', launches: 1, mins: 90, cat: 1 }, { name: 'Notes', launches: 3, mins: 10, cat: 2 }] },
+  6: { apps: [{ name: 'LINE', launches: 10, mins: 60, cat: 0 }, { name: 'YouTube', launches: 5, mins: 50, cat: 1 }, { name: 'Shopee', launches: 4, mins: 30, cat: 0 }, { name: 'Chrome', launches: 3, mins: 20, cat: 2 }] },
+  7: { apps: [{ name: 'Spotify', launches: 1, mins: 120, cat: 1 }, { name: 'LINE', launches: 7, mins: 45, cat: 0 }, { name: 'Notion', launches: 2, mins: 30, cat: 2 }] },
+  8: { apps: [{ name: 'LINE', launches: 9, mins: 55, cat: 0 }, { name: 'TikTok', launches: 8, mins: 65, cat: 0 }, { name: 'Chrome', launches: 4, mins: 25, cat: 2 }, { name: 'PUBG', launches: 1, mins: 45, cat: 1 }] },
+  9: { apps: [{ name: 'Gmail', launches: 6, mins: 20, cat: 2 }, { name: 'Google Calendar', launches: 3, mins: 10, cat: 2 }, { name: 'LINE', launches: 4, mins: 30, cat: 0 }, { name: 'YouTube', launches: 2, mins: 35, cat: 1 }] },
+  10: { apps: [{ name: 'LINE', launches: 7, mins: 50, cat: 0 }, { name: 'Instagram', launches: 5, mins: 40, cat: 0 }, { name: 'Chrome', launches: 3, mins: 20, cat: 2 }, { name: 'Netflix', launches: 1, mins: 60, cat: 1 }] },
+  11: { apps: [{ name: 'Chrome', launches: 8, mins: 65, cat: 2 }, { name: 'LINE', launches: 5, mins: 35, cat: 0 }, { name: 'Facebook', launches: 4, mins: 30, cat: 0 }, { name: 'YouTube', launches: 3, mins: 45, cat: 1 }, { name: 'Calendar', launches: 2, mins: 5, cat: 2 }] },
+  12: { apps: [{ name: 'LINE', launches: 6, mins: 40, cat: 0 }, { name: 'TikTok', launches: 7, mins: 55, cat: 0 }, { name: 'Spotify', launches: 1, mins: 45, cat: 1 }] },
+  13: { apps: [{ name: 'YouTube', launches: 6, mins: 90, cat: 1 }, { name: 'LINE', launches: 4, mins: 25, cat: 0 }, { name: 'Google Maps', launches: 3, mins: 20, cat: 2 }, { name: 'Shopee', launches: 2, mins: 15, cat: 0 }] },
+  14: { apps: [{ name: 'Instagram', launches: 6, mins: 50, cat: 0 }, { name: 'LINE', launches: 5, mins: 30, cat: 0 }, { name: 'Chrome', launches: 4, mins: 35, cat: 2 }, { name: 'Netflix', launches: 2, mins: 75, cat: 1 }] },
+  15: { apps: [{ name: 'LINE', launches: 8, mins: 55, cat: 0 }, { name: 'Candy Crush', launches: 3, mins: 40, cat: 1 }, { name: 'Notes', launches: 2, mins: 15, cat: 2 }, { name: 'Gmail', launches: 4, mins: 10, cat: 2 }] },
+  16: { apps: [{ name: 'TikTok', launches: 9, mins: 70, cat: 0 }, { name: 'LINE', launches: 6, mins: 45, cat: 0 }, { name: 'YouTube', launches: 4, mins: 55, cat: 1 }, { name: 'Chrome', launches: 3, mins: 20, cat: 2 }] },
+  17: { apps: [{ name: 'LINE', launches: 5, mins: 35, cat: 0 }, { name: 'Spotify', launches: 2, mins: 80, cat: 1 }, { name: 'Google Calendar', launches: 4, mins: 15, cat: 2 }, { name: 'Notion', launches: 2, mins: 25, cat: 2 }] },
+  18: { apps: [{ name: 'Chrome', launches: 9, mins: 70, cat: 2 }, { name: 'LINE', launches: 7, mins: 50, cat: 0 }, { name: 'Facebook', launches: 5, mins: 35, cat: 0 }, { name: 'Netflix', launches: 1, mins: 50, cat: 1 }] },
+  19: { apps: [{ name: 'LINE', launches: 6, mins: 40, cat: 0 }, { name: 'Instagram', launches: 4, mins: 30, cat: 0 }, { name: 'YouTube', launches: 3, mins: 40, cat: 1 }, { name: 'Gmail', launches: 5, mins: 15, cat: 2 }] },
+  20: { apps: [{ name: 'YouTube', launches: 7, mins: 100, cat: 1 }, { name: 'TikTok', launches: 5, mins: 45, cat: 0 }, { name: 'LINE', launches: 4, mins: 25, cat: 0 }, { name: 'PUBG', launches: 2, mins: 60, cat: 1 }] },
+  21: { apps: [{ name: 'LINE', launches: 8, mins: 60, cat: 0 }, { name: 'Shopee', launches: 5, mins: 40, cat: 0 }, { name: 'Chrome', launches: 4, mins: 30, cat: 2 }, { name: 'Spotify', launches: 1, mins: 35, cat: 1 }] },
+  22: { apps: [{ name: 'Chrome', launches: 10, mins: 80, cat: 2 }, { name: 'LINE', launches: 6, mins: 45, cat: 0 }, { name: 'Netflix', launches: 2, mins: 95, cat: 1 }, { name: 'Instagram', launches: 3, mins: 20, cat: 0 }] },
+  23: { apps: [{ name: 'LINE', launches: 5, mins: 30, cat: 0 }, { name: 'Google Maps', launches: 4, mins: 25, cat: 2 }, { name: 'YouTube', launches: 3, mins: 40, cat: 1 }, { name: 'Notes', launches: 2, mins: 10, cat: 2 }] },
+  24: { apps: [{ name: 'TikTok', launches: 8, mins: 60, cat: 0 }, { name: 'LINE', launches: 7, mins: 50, cat: 0 }, { name: 'Facebook', launches: 4, mins: 30, cat: 0 }, { name: 'Candy Crush', launches: 2, mins: 25, cat: 1 }] },
+  25: { apps: [{ name: 'LINE', launches: 6, mins: 40, cat: 0 }, { name: 'Spotify', launches: 2, mins: 70, cat: 1 }, { name: 'Chrome', launches: 5, mins: 45, cat: 2 }, { name: 'Gmail', launches: 3, mins: 10, cat: 2 }] },
+  26: { apps: [{ name: 'Instagram', launches: 7, mins: 55, cat: 0 }, { name: 'LINE', launches: 5, mins: 35, cat: 0 }, { name: 'YouTube', launches: 4, mins: 50, cat: 1 }, { name: 'Notion', launches: 2, mins: 20, cat: 2 }] },
+  27: { apps: [{ name: 'LINE', launches: 9, mins: 65, cat: 0 }, { name: 'Chrome', launches: 6, mins: 50, cat: 2 }, { name: 'Netflix', launches: 2, mins: 85, cat: 1 }, { name: 'Shopee', launches: 3, mins: 20, cat: 0 }] },
+  28: { apps: [{ name: 'TikTok', launches: 6, mins: 50, cat: 0 }, { name: 'LINE', launches: 4, mins: 30, cat: 0 }, { name: 'Spotify', launches: 1, mins: 40, cat: 1 }, { name: 'Calendar', launches: 3, mins: 10, cat: 2 }] },
+  29: { apps: [{ name: 'LINE', launches: 7, mins: 45, cat: 0 }, { name: 'YouTube', launches: 5, mins: 60, cat: 1 }, { name: 'Chrome', launches: 4, mins: 35, cat: 2 }, { name: 'Facebook', launches: 3, mins: 25, cat: 0 }] },
+  30: { apps: [{ name: 'Chrome', launches: 8, mins: 55, cat: 2 }, { name: 'LINE', launches: 6, mins: 40, cat: 0 }, { name: 'Instagram', launches: 4, mins: 35, cat: 0 }, { name: 'Netflix', launches: 1, mins: 70, cat: 1 }, { name: 'Gmail', launches: 5, mins: 15, cat: 2 }] },
+  31: { apps: [{ name: 'LINE', launches: 8, mins: 50, cat: 0 }, { name: 'YouTube', launches: 6, mins: 75, cat: 1 }, { name: 'TikTok', launches: 5, mins: 40, cat: 0 }, { name: 'Chrome', launches: 3, mins: 25, cat: 2 }, { name: 'PUBG', launches: 1, mins: 50, cat: 1 }] },
+};
+
+const MONTHS_TH = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+let currentYear = 2026, currentMonth = 9; // 0-indexed: 9 = October
+let selectedDay = null;
+
+function formatMins(m) {
+  if (m < 60) return m + 'm';
+  const h = Math.floor(m / 60);
+  const r = m % 60;
+  return r ? h + 'h ' + r + 'm' : h + 'h';
+}
+
+function getTotalMins(data) {
+  if (!data) return 0;
+  return data.apps.reduce((s, a) => s + a.mins, 0);
+}
+
+function getMaxMins() {
+  let max = 0;
+  for (const k in SAMPLE_DATA) {
+    const t = getTotalMins(SAMPLE_DATA[k]);
+    if (t > max) max = t;
+  }
+  return max;
+}
+
+function renderCalendar() {
+  const grid = document.getElementById('cal-grid');
+  const title = document.getElementById('cal-title');
+  title.textContent = MONTHS_TH[currentMonth] + ' ' + currentYear;
+
+  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const today = new Date();
+  const isCurrentMonth = today.getFullYear() === currentYear && today.getMonth() === currentMonth;
+  const maxMins = getMaxMins();
+
+  let html = '';
+  DAYS.forEach(d => { html += '<div class="cal-day-name">' + d + '</div>'; });
+
+  // empty cells before first day
+  for (let i = 0; i < firstDay; i++) {
+    html += '<div class="cal-day empty"></div>';
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const isToday = isCurrentMonth && today.getDate() === d;
+    const isSelected = selectedDay === d;
+    const data = SAMPLE_DATA[d];
+    const total = getTotalMins(data);
+    const appCount = data ? data.apps.length : 0;
+    const pct = maxMins ? Math.round((total / maxMins) * 100) : 0;
+
+    let cls = 'cal-day';
+    if (isToday) cls += ' today';
+    if (isSelected) cls += ' selected';
+
+    html += '<div class="' + cls + '" onclick="selectDay(' + d + ')">';
+    html += '<div class="day-num">' + d + '</div>';
+    if (total > 0) {
+      html += '<div class="day-total">' + formatMins(total) + '</div>';
+      html += '<div class="day-apps">' + appCount + ' apps</div>';
+      html += '<div class="day-bar"><div class="day-bar-fill" style="width:' + pct + '%"></div></div>';
+    } else {
+      html += '<div class="day-muted">—</div>';
+    }
+    html += '</div>';
+  }
+
+  grid.innerHTML = html;
+}
+
+function selectDay(d) {
+  selectedDay = d;
+  renderCalendar();
+  showDetail(d);
+}
+
+function showDetail(d) {
+  const panel = document.getElementById('detail-panel');
+  const data = SAMPLE_DATA[d];
+  if (!data) {
+    panel.classList.remove('active');
+    return;
+  }
+
+  const totalMins = getTotalMins(data);
+  const totalSessions = data.apps.reduce((s, a) => s + a.launches, 0);
+  const maxAppMins = Math.max(...data.apps.map(a => a.mins));
+
+  document.getElementById('detail-title').textContent = d + ' ' + MONTHS_TH[currentMonth] + ' ' + currentYear;
+  document.getElementById('detail-total').textContent = formatMins(totalMins);
+  document.getElementById('detail-apps').textContent = data.apps.length;
+  document.getElementById('detail-sessions').textContent = totalSessions;
+
+  let body = '';
+  // sort by mins desc
+  const sorted = [...data.apps].sort((a, b) => b.mins - a.mins);
+  sorted.forEach(app => {
+    const color = APP_COLORS[app.cat] || APP_COLORS[3];
+    const barPct = maxAppMins ? Math.round((app.mins / maxAppMins) * 100) : 0;
+    body += '<div class="app-row">';
+    body += '<div class="app-avatar" style="background:' + color.bg + ';color:' + color.text + '">' + app.name.charAt(0) + '</div>';
+    body += '<div class="app-info">';
+    body += '<div class="app-name">' + app.name + '</div>';
+    body += '<div class="app-meta">' + app.launches + ' launches</div>';
+    body += '<div class="app-bar-wrap"><div class="app-bar" style="width:' + barPct + '%;background:' + color.bar + '"></div></div>';
+    body += '</div>';
+    body += '<div class="app-time">' + formatMins(app.mins) + '</div>';
+    body += '</div>';
+  });
+
+  document.getElementById('detail-body').innerHTML = body;
+  panel.classList.add('active');
+
+  // scroll to panel
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function changeMonth(delta) {
+  currentMonth += delta;
+  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+  if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+  selectedDay = null;
+  document.getElementById('detail-panel').classList.remove('active');
+  renderCalendar();
+}
+
+function goToday() {
+  const today = new Date();
+  currentYear = today.getFullYear();
+  currentMonth = today.getMonth();
+  selectedDay = today.getDate();
+  renderCalendar();
+  showDetail(selectedDay);
+}
+
+// Init
+renderCalendar();
+// Auto-select today
+selectDay(4);
+</script>
+</body>
+</html>

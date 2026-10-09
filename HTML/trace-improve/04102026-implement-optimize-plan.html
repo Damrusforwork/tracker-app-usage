@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TRACE — แผน Implement + Optimize</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel-2:#1c2330; --line:#2a3441;
+    --txt:#e6edf3; --muted:#8b98a9; --accent:#4c9aff; --accent-dim:#1f3a63;
+    --danger:#ff5c5c; --danger-dim:#3d1d1d; --warn:#e3b341; --ok:#3fb950;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:32px 20px 80px; background:var(--bg); color:var(--txt);
+    font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,"Noto Sans Thai",sans-serif;
+    line-height:1.75; font-size:15px;
+  }
+  .wrap{max-width:980px; margin:0 auto}
+  header.doc{border-bottom:1px solid var(--line); padding-bottom:20px; margin-bottom:32px}
+  h1{margin:0 0 6px; font-size:28px; letter-spacing:-.4px}
+  .sub{color:var(--muted); font-size:13px}
+  .sub code{font-family:var(--mono); color:var(--accent)}
+  .meta{display:flex; flex-wrap:wrap; gap:8px; margin-top:14px}
+  .chip{
+    font-size:11px; font-family:var(--mono); padding:3px 9px; border-radius:999px;
+    background:var(--panel-2); border:1px solid var(--line); color:var(--muted)
+  }
+  section{
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:20px 22px; margin-bottom:22px
+  }
+  h2{
+    margin:0 0 16px; font-size:17px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    padding-bottom:12px; border-bottom:1px solid var(--line)
+  }
+  h2 .num{
+    font-family:var(--mono); font-size:12px; color:var(--bg); background:var(--accent);
+    border-radius:5px; padding:2px 8px; font-weight:700
+  }
+  h3{
+    margin:22px 0 10px; font-size:13px; text-transform:uppercase; letter-spacing:1px;
+    color:var(--muted); font-family:var(--mono)
+  }
+  h3:first-of-type{margin-top:6px}
+  ol,ul{margin:0; padding-left:0; list-style:none; counter-reset:item}
+  ol>li,ul>li{
+    counter-increment:item; position:relative; padding:8px 0 8px 30px;
+    border-bottom:1px dashed rgba(42,52,65,.55)
+  }
+  ol>li:last-child,ul>li:last-child{border-bottom:0}
+  ol>li::before{
+    content:counter(item); position:absolute; left:0; top:12px;
+    font-family:var(--mono); font-size:11px; color:var(--muted);
+    width:20px; height:20px; border-radius:50%; background:var(--panel-2);
+    border:1px solid var(--line); display:grid; place-items:center
+  }
+  ul>li::before{content:"\2013"; color:var(--muted); position:absolute; left:4px; font-family:var(--mono)}
+  code{
+    font-family:var(--mono); font-size:12.5px; background:var(--panel-2);
+    border:1px solid var(--line); border-radius:4px; padding:1px 5px; color:var(--accent)
+  }
+  .tag{
+    display:inline-block; font-family:var(--mono); font-size:10px; font-weight:700;
+    padding:2px 7px; border-radius:4px; margin-right:8px; vertical-align:2px
+  }
+  .tag-sev{background:var(--danger-dim); color:var(--danger); border:1px solid #5c2b2b}
+  .tag-new{background:var(--accent-dim); color:var(--accent); border:1px solid #2d4f80}
+  .tag-opt{background:#2d2410; color:var(--warn); border:1px solid #55451c}
+  .box{border-radius:8px; padding:12px 16px; margin-top:4px; font-size:14px}
+  .box-goal{background:var(--accent-dim); border:1px solid #2d4f80}
+  .box-risk{background:#2d2410; border:1px solid #55441a}
+  .box strong{color:var(--warn)}
+  .q{
+    display:block; margin-top:10px; padding:10px 14px; background:var(--panel-2);
+    border:1px dashed var(--warn); border-radius:6px; color:var(--warn); font-size:13px
+  }
+  .foot{margin-top:34px; padding-top:16px; border-top:1px solid var(--line); color:var(--muted); font-size:12px}
+  @media print{
+    body{background:#fff; color:#111; padding:0}
+    section{border:1px solid #ccc; background:#fff; break-inside:avoid}
+    h2 .num{background:#111; color:#fff}
+    code{background:#f4f4f4; border-color:#ddd; color:#0b4fa8}
+    .sub,.chip{color:#555}
+    .box-goal{background:#eef4ff; border-color:#b9cdf0}
+    .box-risk{background:#fff8e6; border-color:#e8d49a}
+    .box strong,.q{color:#8a6100}
+    .q{border-color:#c9a227}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="doc">
+    <h1>TRACE — แผน Implement + Optimize</h1>
+    <div class="sub">04 ต.ค. 2026 · แหล่งข้อมูล: <code>MD/imprement-1/imprement.md</code> (ขอบเขตที่ผู้ใช้เลือก)</div>
+    <div class="meta">
+      <span class="chip">Expo / React Native</span>
+      <span class="chip">Phase 0 — งานบล็อก</span>
+      <span class="chip">Phase 1 — ฟีเจอร์</span>
+      <span class="chip">pnpm</span>
+    </div>
+    <div class="box box-goal" style="margin-top:16px">
+      <strong>เป้าหมาย:</strong> ส่งมอบฟีเจอร์ที่เลือกไว้ และแก้ปัญหาเครื่องค้าง (freeze) — โดยแก้ปัญหา freeze ก่อน
+    </div>
+  </header>
+
+  <section>
+    <h2><span class="num">1</span> วินิจฉัยสาเหตุเครื่องค้าง (หลักฐาน)</h2>
+    <ol>
+      <li>หน้า History เรนเดอร์ session <em>ทั้งหมด</em> ใน <code>ScrollView</code> โดยมี <code>Reveal</code> + <code>Animated.timing</code> หนึ่งชุดต่อหนึ่งแถว (<code>App.tsx:401-421</code>) เมื่อมีหลายร้อยแถว = view tree ขนาดใหญ่มาก + timer ที่ยังค้างอยู่หลายร้อยตัว <span class="tag tag-sev">หลัก</span>นี่คือสาเหตุหลักที่ทำให้ค้าง</li>
+      <li>เวลาหน่วงต่อแถว (stagger) ไม่มีขอบเขตสูงสุด: <code>delay={groupIndex*70+90+index*40}</code> (<code>App.tsx:406</code>) → 500 แถว = ท้ายคิว timer ยาว 20 วินาที</li>
+      <li>ฝั่ง native สร้าง <code>SimpleDateFormat</code> ใหม่ทุก session (<code>UsageAccessModule.kt:82</code>) ช้าและสิ้นเปลือง</li>
+      <li>ฝั่ง native เรียก <code>PackageManager.getApplicationInfo</code> ทุก session (<code>UsageAccessModule.kt:77</code>) = IPC ต่อหนึ่งแถว และไม่มี cache</li>
+      <li>ไม่มี package blocklist → event ของ launcher / system (<code>com.nothing.launcher</code>, <code>com.android.systemui</code>) กลายเป็น session ทำให้มีทั้ง noise และปริมาณที่เกินจำเป็น</li>
+      <li>ไม่จำกัดจำนวน session ที่ส่งกลับ การ query ทั้งวันอาจได้หลายพันแถวผ่าน bridge แล้ว <code>JSON.stringify</code> + เขียนลง AsyncStorage (<code>lib/usage.ts:20</code>) ทำให้ JS ค้าง</li>
+      <li><code>totalSeconds</code> ถูกคำนวณใหม่ทุก render และ <code>summaries</code> ถูกจัดเรียงใหม่ทุก keystroke (<code>App.tsx:146-147</code>) ผลกระทบเล็ก</li>
+      <li>การ refresh ไม่มี concurrency guard → แตะเร็ว 2 ครั้ง = native query และ write ซ้อนกัน 2 ชุด (<code>App.tsx:114-136</code>)</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2><span class="num">2</span> Phase 0 — แก้ปัญหาเครื่องค้าง <span style="font-size:12px;color:var(--danger);font-family:var(--mono)">ทำก่อน / บล็อกการทดสอบบนเครื่องจริง</span></h2>
+    <ol>
+      <li>History: เลิกใช้ <code>Reveal</code> รายแถว เปลี่ยนเป็น static rows เมื่อ <code>items.length &gt; 50</code> และจำกัด stagger เป็น <code>Math.min(index,12)*45</code></li>
+      <li>History: ใช้การ virtualize ด้วย <code>FlatList</code> (<code>initialNumToRender={30}</code>, <code>windowSize={7}</code>, <code>maxToRenderPerBatch={20}</code>) โดยเก็บ group header ไว้ผ่าน <code>SectionList</code></li>
+      <li>Today / Apps: แสดง 20 แถวบนสุด + ปุ่ม "ดูทั้งหมด" และจำกัด stagger ตามกฎเดียวกัน</li>
+      <li>Native: ย้าย <code>SimpleDateFormat</code> ไปเป็น instance ระดับ class และ cache ค่า label ไว้ใน <code>MutableMap&lt;String,String&gt;</code></li>
+      <li>Native: เพิ่ม blocklist <code>setOf(ownPackage, "com.nothing.launcher", "com.android.systemui", "com.android.launcher3", "com.sec.android.app.launcher")</code> โดยทำเป็น const ที่ตั้งค่าได้</li>
+      <li>Native: จำกัดผลลัพธ์ไม่เกิน 2000 sessions (ตัด session ที่สั้นที่สุดหรือเก่าที่สุดออกก่อน และระบุเหตุผลที่เลือก)</li>
+      <li>JS: เพิ่ม guard ด้วย <code>refreshing</code> ที่ต้นฟังก์ชัน <code>refreshRealUsage</code> และปิดปุ่มระหว่าง refresh</li>
+      <li>JS: memoize ค่า <code>totalSeconds</code> ด้วย <code>useMemo</code></li>
+      <li>ทดสอบบนเครื่องจริง: เปิด History เลื่อนเร็ว แล้วสลับแท็บ → เกณฑ์ผ่าน = ไม่มี ANR และเลื่อนลื่นตลอด 60 วินาที</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2><span class="num">3</span> Phase 1 — ฟีเจอร์ที่เลือก</h2>
+
+    <h3>Today</h3>
+    <ol>
+      <li>เทียบกับเมื่อวาน: badge <code>+/- %</code> สีเขียว/แดง อยู่ใต้ตัวเลขหลัก</li>
+      <li>กราฟแท่งขนาดเล็ก 7 วัน (sparkline): วาดด้วย <code>View</code> (ไม่เพิ่ม dependency) ดึงข้อมูลจาก <code>sessions</code> ที่จัดกลุ่มตามวัน</li>
+      <li>แยกหมวดหมู่: map <code>categoryOf(packageName)</code> (Social / Games / Productivity / Other) + แถบสัดส่วนแนวนอนด้วยอัตราส่วน <code>flex</code></li>
+      <li>การ์ด insight: ข้อความสั้นหนึ่งบรรทัดจากหมวดที่เปลี่ยนแปลงมากที่สุด (เช่น "Social 45 นาที, +22% เทียบเมื่อวาน")</li>
+    </ol>
+
+    <h3>Apps</h3>
+    <ol>
+      <li>หน้า detail: แตะที่แถวเพื่อเปิดรายละเอียด (รายการ session, แนวโน้มรายวัน, ระยะเวลาเฉลี่ย) ใช้ state ใหม่ <code>selectedApp</code> ไม่ใช้ router</li>
+      <li>หมวดหมู่: ตรวจจับอัตโนมัติจาก keyword map ของชื่อแพ็กเกจ/ชื่อแอป + ตั้งค่าเองได้ เก็บค่าไว้ใน AsyncStorage</li>
+      <li>แนวโน้มรายสัปดาห์: sparkline 7 วันแยกรายแอป + badge ขึ้น/ลง</li>
+      <li>ค้นหาและเรียงลำดับ: ช่องค้นหา + โหมดเรียง (เวลาที่ใช้ / จำนวนครั้งที่เปิด / ชื่อ / เปิดล่าสุด)</li>
+      <li>ไอคอนจริง: ลองใช้ icon API ของ <code>expo-application</code> หากไม่ได้ให้ fallback เป็นตัวอักษรแรก (แบบเดิม)</li>
+    </ol>
+
+    <h3>History</h3>
+    <ol>
+      <li>แท็บ Calendar dashboard: ตารางเดือน โดยแต่ละช่อง = ยอดรวม + จำนวนแอป + แถบสัดส่วน แตะที่วันเพื่อเปิดแผงรายละเอียด (ใช้สเปกจาก HTML mockup เดิม)</li>
+      <li>เลื่อนเดือน + ปุ่ม "กลับไปวันนี้"</li>
+      <li>ตัวเลือกวันที่: ใช้ <code>DateTimePicker</code> เมื่อจำเป็นเท่านั้น <span class="tag tag-new">dependency ใหม่</span>(<code>@react-native-community/datetimepicker</code> ใช้เฉพาะ Android)</li>
+      <li>Timeline 24 ชั่วโมง: แถบแนวนอนใช้อัตราส่วน <code>flex</code> สีตามแอป แตะที่ช่วงเพื่อดูรายละเอียด session</li>
+      <li>รายละเอียด session: แผงแบบ bottom sheet พร้อมเวลาเริ่ม/สิ้นสุดที่แน่นอน + ลิงก์ไปหน้ารายละเอียดของแอป</li>
+      <li>การ์ดสรุปรายวัน: ยอดรวม, จำนวนแอป, 3 แอปที่ใช้เวลามากที่สุด</li>
+    </ol>
+
+    <h3>Settings</h3>
+    <ol>
+      <li>Dark mode: ใช้ <code>useColorScheme</code> + theme const และเก็บค่าที่เลือกไว้ใน AsyncStorage</li>
+      <li>Notifications: ใช้ <code>expo-notifications</code> <span class="tag tag-new">dependency ใหม่</span>สำหรับสรุปรายวัน + แจ้งเตือนเมื่อใช้เวลาเกินลิมิต</li>
+      <li>Retention: 7 / 30 / 90 วัน หรือไม่จำกัด และตัดข้อมูลตอนโหลดแอป</li>
+      <li>สลับภาษา TH/EN: ใช้ตารางข้อความ และเก็บค่าไว้</li>
+      <li>หน้า Debug: จำนวน raw event, จำนวน session, ขนาดที่ใช้ใน storage, เวลาที่ query ล่าสุด</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2><span class="num">4</span> การตรวจสอบ (Verify)</h2>
+    <ul>
+      <li><code>pnpm exec tsc --noEmit</code> (ต้องจบด้วย exit code 0)</li>
+      <li>เช็กลิสต์ทดสอบบนเครื่องจริง: เปิดแอปครั้งแรกน้อยกว่า 3 วินาที, เลื่อน History แล้วไม่ค้าง, refresh เร็ว 2 ครั้งติด, airplane mode, กรณีผู้ใช้ปฏิเสธสิทธิ์</li>
+      <li><code>PROJECT_ROADMAP_AND_STATUS.md</code>: อัปเดต Change History ทุกครั้งที่มีการเปลี่ยนแปลง</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="num">5</span> ความเสี่ยง / คำถามที่ยังค้าง</h2>
+    <ul>
+      <li>ความครอบคลุมของ icon API ใน <code>expo-application</code> บน Nothing OS: ต้องทดสอบจริง โดยมีค่า fallback ไว้แล้ว</li>
+      <li>ขั้นตอนการขอ permission ของ notification บน Android 13+: ขอ ณ ตอนที่ผู้ใช้เปิดใช้งานในหน้า settings</li>
+      <li>Dark mode เพิ่มงาน QA เป็นสองเท่า: รวมธีมไว้ที่ <code>colors</code> จุดเดียว ห้ามแยก style รายหน้าจอ</li>
+    </ul>
+    <div class="box box-risk">
+      <strong>ต้องการให้ยืนยัน</strong>
+      <span class="q">จำกัดผลลัพธ์ที่ 2000 sessions ได้ไหม?</span>
+      <span class="q">ใช้ dependency DateTimePicker ได้ไหม หรือทำเฉพาะการเลื่อนเดือนด้วยตัวเอง?</span>
+    </div>
+  </section>
+
+  <div class="foot">TRACE — แผน Implement + Optimize · สร้างเมื่อ 04 ต.ค. 2026 · ไฟล์เดียว ไม่พึ่ง dependency ภายนอก</div>
+
+</div>
+</body>
+</html>

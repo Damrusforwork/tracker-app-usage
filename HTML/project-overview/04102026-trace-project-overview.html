@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TRACE — App Usage Journal | Project Overview</title>
+<style>
+  :root {
+    --ink: #17231f;
+    --muted: #66736c;
+    --green: #2f6f5e;
+    --pale: #e8f1ec;
+    --line: #dce6df;
+    --warm: #f5efe5;
+    --white: #fff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", "Sarabun", system-ui, -apple-system, sans-serif;
+    background: var(--warm);
+    color: var(--ink);
+    line-height: 1.65;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 40px 24px 72px; }
+  header.hero {
+    background: var(--green);
+    color: var(--white);
+    border-radius: 24px;
+    padding: 34px 32px;
+    margin-bottom: 32px;
+  }
+  header.hero .eyebrow {
+    font-size: 12px; font-weight: 800; letter-spacing: 3px;
+    color: #b9d1c4; text-transform: uppercase;
+  }
+  header.hero h1 { margin: 8px 0 6px; font-size: 38px; line-height: 1.15; }
+  header.hero p { margin: 0; color: #d8e8de; font-size: 16px; }
+  header.hero .tags { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 8px; }
+  header.hero .tag {
+    background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.28);
+    padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600;
+  }
+  h2 {
+    font-size: 20px; margin: 34px 0 12px; padding-bottom: 8px;
+    border-bottom: 2px solid var(--line);
+  }
+  h3 { font-size: 15px; margin: 20px 0 6px; color: var(--green); }
+  p { margin: 0 0 12px; }
+  .muted { color: var(--muted); }
+  .card {
+    background: var(--white); border: 1px solid var(--line);
+    border-radius: 16px; padding: 20px 22px; margin-bottom: 16px;
+  }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+  .stat {
+    background: var(--white); border: 1px solid var(--line);
+    border-radius: 14px; padding: 14px 16px;
+  }
+  .stat .k { font-size: 12px; color: var(--muted); }
+  .stat .v { font-size: 17px; font-weight: 800; margin-top: 3px; }
+  ul { margin: 8px 0 12px; padding-left: 20px; }
+  li { margin-bottom: 5px; }
+  code {
+    background: var(--pale); color: var(--green);
+    padding: 1px 6px; border-radius: 6px;
+    font-family: "Consolas", "Cascadia Code", monospace; font-size: 13px;
+  }
+  pre {
+    background: #14201c; color: #dfe9e3; border-radius: 14px;
+    padding: 18px 20px; overflow-x: auto; font-size: 13px; line-height: 1.55;
+  }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 16px; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--pale); color: var(--green); font-size: 12px; text-transform: uppercase; letter-spacing: .5px; }
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+  .done { background: #dcefe3; color: #276b4f; }
+  .pending { background: #f6e6cf; color: #8a5a17; }
+  .warn { background: #f7dede; color: #973b3b; }
+  footer { margin-top: 44px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="eyebrow">Project Overview</div>
+    <h1>TRACE — App Usage Journal</h1>
+    <p>แอป Android-first สำหรับดูว่าแต่ละวันเปิดแอปอะไร เปิดกี่ครั้ง เมื่อไร และใช้นานเท่าไร — ประมวลผลและเก็บข้อมูลบนเครื่องเท่านั้น</p>
+    <div class="tags">
+      <span class="tag">Expo / React Native</span>
+      <span class="tag">TypeScript</span>
+      <span class="tag">Kotlin Native Module</span>
+      <span class="tag">Android-first</span>
+      <span class="tag">On-device / No cloud</span>
+    </div>
+  </header>
+
+  <h2>1. โปรเจกต์นี้เกี่ยวกับอะไร</h2>
+  <div class="card">
+    <p>TRACE อ่านข้อมูลการใช้งานแอปจาก Android โดยตรงผ่าน <code>UsageStatsManager</code> แล้วแปลงเป็น "session" (ช่วงเวลาที่เปิดแอป) เพื่อให้ผู้ใช้ย้อนดูพฤติกรรมการใช้โทรศัพท์ของตัวเอง</p>
+    <ul>
+      <li><strong>ไม่ใช่</strong> time tracker แม่นยำระดับวินาที — duration เป็นค่าประมาณจาก foreground/background events</li>
+      <li><strong>ไม่อ่าน</strong> เนื้อหาหน้าจอ ข้อความ หรือการกดภายในแอปอื่น</li>
+      <li><strong>ไม่ส่ง</strong> ข้อมูลขึ้น cloud/server — ไม่มี login ใน MVP</li>
+      <li>ข้อมูลเป็นข้อมูลส่วนบุคคล ควรมี privacy policy ก่อนเผยแพร่</li>
+    </ul>
+  </div>
+
+  <h2>2. ทำอะไรได้บ้าง (ปัจจุบัน — 5 tabs)</h2>
+  <div class="grid">
+    <div class="stat"><div class="k">หน้าวันนี้</div><div class="v">เวลารวม / เทียบเมื่อวาน / sparkline 7 วัน / หมวดหมู่ / insight card</div></div>
+    <div class="stat"><div class="k">หน้าแอปที่ใช้</div><div class="v">ค้นหา / sort / filter หมวด / หน้า detail รายแอป</div></div>
+    <div class="stat"><div class="k">หน้าประวัติ</div><div class="v">รวมเป็นรายชั่วโมง (แตะขยายดู session) + session overlay</div></div>
+    <div class="stat"><div class="k">หน้าปฏิทิน</div><div class="v">month grid / day detail / timeline 24 ชม. / top apps</div></div>
+    <div class="stat"><div class="k">หน้าตั้งค่า</div><div class="v">Dark mode / แจ้งเตือนรายวัน / retention / TH-EN / debug / เปิด Usage Access</div></div>
+  </div>
+  <div class="card">
+    <ul>
+      <li><strong>Delta sync</strong> — จำ <code>lastSync</code> อ่านเฉพาะ event ใหม่ (overlap 60 วินาที, ย้อนสูงสุด 7 วัน) แล้ว upsert ตาม session <code>id</code></li>
+      <li><strong>Refresh</strong> — ดึงทุก tab ได้ (ปุ่ม + pull-to-refresh), กันกดซ้ำ, ยกเลิกได้เมื่อ unmount</li>
+      <li><strong>Persistence</strong> — เก็บด้วย AsyncStorage + prune ตาม retention (7/30/90/ไม่จำกัด), เปิดแอปใหม่ข้อมูลยังอยู่</li>
+      <li><strong>Export / Import / Clear — ตัดออกแล้ว</strong> (ไม่มีในแอปปัจจุบัน)</li>
+    </ul>
+  </div>
+
+  <h2>3. สถาปัตยกรรม</h2>
+  <p class="muted">แอปชั้นเดียว (client only) ไม่มี backend ไม่มี network call สำหรับข้อมูลการใช้งาน</p>
+  <pre>index.ts  →  registerRootComponent(App)
+App.tsx   →  UI 5 tabs + navigation state + load / refresh / prefs / notifications
+│
+├─ lib/usage.ts        →  model, repo, merge/coalesce, lastSync, date &amp; duration utils (+ vitest)
+├─ lib/usageBridge.ts  →  JS bridge ไป native module (Android เท่านั้น)
+├─ lib/categories.ts   →  หมวดแอป (Social/Games/Work/Other) + day helpers
+└─ lib/prefs.ts        →  theme/lang/retention/notify prefs + ชุดข้อความ TH-EN
+        │
+        └─ android/.../UsageAccessModule.kt   →  query UsageStatsManager, pairing+coalesce,
+                                                  allowlist, หักเวลาจอดับ, เปิด Settings
+           android/.../UsageAccessPackage.kt  →  register native module
+           android/.../MainApplication.kt     →  เพิ่ม package เข้า package list
+           android/.../AndroidManifest.xml    →  PACKAGE_USAGE_STATS + launcher queries</pre>
+
+  <h3>โครงสร้างข้อมูล Session</h3>
+<pre>type UsageSession = {
+  id: string;             // "&lt;package&gt;-&lt;startMillis&gt;-&lt;endMillis&gt;"
+  packageName: string;
+  appName: string;
+  startedAt: string;      // ISO 8601
+  endedAt: string;        // ISO 8601
+  durationSeconds: number;
+};</pre>
+
+  <h2>4. Tech Stack</h2>
+  <table>
+    <tr><th>ส่วน</th><th>เทคโนโลยี</th></tr>
+    <tr><td>Framework</td><td>Expo SDK ~57 / React Native 0.86 / React 19</td></tr>
+    <tr><td>ภาษา</td><td>TypeScript (strict)</td></tr>
+    <tr><td>Native</td><td>Kotlin — <code>UsageAccessModule</code> + <code>UsageStatsManager</code></td></tr>
+    <tr><td>Storage</td><td><code>@react-native-async-storage/async-storage</code></td></tr>
+    <tr><td>Safe-area / แจ้งเตือน</td><td>react-native-safe-area-context, expo-notifications</td></tr>
+    <tr><td>Test</td><td>vitest (<code>pnpm test</code>) · typecheck (<code>pnpm typecheck</code>)</td></tr>
+    <tr><td>Package manager</td><td><strong>pnpm</strong> (<code>pnpm-lock.yaml</code>)</td></tr>
+  </table>
+
+  <h2>5. สถานะปัจจุบัน</h2>
+  <table>
+    <tr><th>รายการ</th><th>สถานะ</th></tr>
+    <tr><td>UI 5 tabs + local storage + prefs (theme/lang/retention)</td><td><span class="badge done">เสร็จ</span></td></tr>
+    <tr><td>Native bridge + permission + allowlist + screen-off</td><td><span class="badge done">เสร็จ</span></td></tr>
+    <tr><td>Delta sync + coalesce + unit tests (10 ผ่าน)</td><td><span class="badge done">เสร็จ</span></td></tr>
+    <tr><td>Export / Import / Clear</td><td><span class="badge warn">ตัดออกแล้ว</span></td></tr>
+    <tr><td>ทดสอบบนเครื่องจริง (หลาย OEM, multi-window)</td><td><span class="badge pending">รอดำเนินการ</span></td></tr>
+    <tr><td>Release quality (keystore, app id จริง)</td><td><span class="badge pending">รอดำเนินการ</span></td></tr>
+  </table>
+
+  <h2>6. ข้อจำกัดที่รู้อยู่</h2>
+  <div class="card">
+    <ul>
+      <li>Android บางรุ่นหน่วง/จำกัด UsageEvents ความแม่นยำต่างกัน</li>
+      <li>เวลาปิดจอถูกหักออกจาก duration ใน native แล้ว — session ข้ามเที่ยงคืนยังนับรวมในวันเริ่มต้น</li>
+      <li>Session ที่ยังเปิดอยู่ถูกปิดตอน refresh อาจขยับเมื่อ refresh ถี่</li>
+      <li>ไม่มี Export/Import — ข้อมูลอยู่บนเครื่องเท่านั้น ลบได้เฉพาะเปลี่ยน retention</li>
+      <li>Path build native ต้องใช้ Android SDK / Gradle (ไม่มีใน sandbox)</li>
+    </ul>
+  </div>
+
+  <h2>7. Roadmap</h2>
+  <table>
+    <tr><th>Phase</th><th>เป้าหมาย</th></tr>
+    <tr><td>1</td><td>ทดสอบ release APK บนเครื่องจริง + ตรวจความถูกต้องของข้อมูล <span class="badge pending">รอดำเนินการ</span></td></tr>
+    <tr><td>2</td><td>Data correctness — event tests, delta sync, screen-off <span class="badge done">เสร็จ</span></td></tr>
+    <tr><td>3</td><td>UX — detail screen, timeline, search/filter, chart, retention, dark mode, i18n <span class="badge done">เสร็จ</span></td></tr>
+    <tr><td>4</td><td>Release — real app id, keystore, versionCode, privacy policy <span class="badge pending">รอดำเนินการ</span></td></tr>
+  </table>
+
+  <footer>
+    สรุปจาก source code จริง (App.tsx, lib/*, android/*, package.json) และ
+    <code>PROJECT_ROADMAP_AND_STATUS.md</code> · อัปเดตล่าสุด 04/10/2026 (5 tabs, ไม่มี Export/Import แล้ว)
+  </footer>
+
+</div>
+</body>
+</html>
