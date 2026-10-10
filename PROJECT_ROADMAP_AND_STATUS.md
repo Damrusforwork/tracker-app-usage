@@ -27,7 +27,8 @@ Single-tier client app. No backend, no network calls for usage data.
 
 ```text
 index.ts  ->  registerRootComponent(App)
-App.tsx   ->  UI + tab navigation + load/refresh/export/import/clear
+App.tsx   ->  shell, tabs, load/refresh
+components/ ->  Today, Apps, HistoryList, CalendarView, Settings, SessionOverlay, ui, theme
 lib/usage.ts       ->  model, AsyncStorage repo, merge, date/duration utils
 lib/usageBridge.ts ->  JS bridge to native module (Android only)
 android/.../UsageAccessModule.kt  ->  query UsageStatsManager, open settings
@@ -57,15 +58,15 @@ Storage key: `@app-usage-tracker/sessions`.
 - **Today dashboard** — total time, app count, launch count, average per launch, app list sorted by total time, Usage Access status, manual refresh.
 - **Apps tab** — app summaries with name, launches, latest open time, total time.
 - **History tab** — sessions grouped by day with start–end times and durations.
-- **Settings tab** — open Android Usage Access settings, dark mode, daily notification, retention, TH/EN, debug.
-- **Delta sync** — `lastSync` window (60s overlap, 7-day max) + `mergeWindow` upsert by id + `coalesceSessions` + retention prune on every save.
+- **Settings tab** — open Android Usage Access settings, dark mode, retention, TH/EN, debug. Daily notification removed 2026-10-10.
+- **Delta sync** — `lastSync` window (60s overlap, backfill matches retention, unlimited = 90 days, minimum 7) + `mergeWindow` upsert by id + `coalesceSessions` + retention prune on every save. First sync is no longer midnight-only.
 - **Native query** — `querySessions(start, end)` reads UsageEvents, pairs foreground/background, emits sessions ≥ 1s, skips own package.
 - **Web preview** — runs via `react-native-web`; native usage unavailable.
 - **Calendar tab** — month grid (daily total + bar), tap day for summary + 24h timeline + top-5 apps.
-- **Today extras** — yesterday +/-% badge, 7-day sparkline, category stacked bar (Social/Games/Work/Other), insight card.
+- **Today extras** — same-hour yesterday compare (hidden when yesterday is empty), 7-day sparkline, category bar (Social/Video/Shopping/Games/Work/Other), insight names the top app. No 3-minute hero bar. Refreshes when the app returns to the foreground.
 - **Apps extras** — search, sort (time/count/name/recent), category filter, per-app detail (7-day trend, avg, recent sessions).
 - **Session detail overlay** — exact start/end/duration + jump to app detail.
-- **Settings extras** — dark mode (system/light/dark), daily 21:00 notification, retention prune, TH/EN toggle, debug screen (counts, storage KB, last query ms).
+- **Settings extras** — dark mode (system/light/dark), retention prune, TH/EN toggle, debug screen (counts, storage KB, last query ms).
 - **Display filter** — sessions whose name looks like a package (`com.*`) hidden; launcher/system packages blocked natively.
 
 # In Progress
@@ -86,7 +87,7 @@ Storage key: `@app-usage-tracker/sessions`.
 - **README drift**: README references `pnpm start` while `package.json` defines `start: expo start` (works, but inconsistent docs).
 - **Single open session per package**: the native map overwrites a start if a new start arrives before an end; out-of-order/repeated events are not fully handled.
 - **Timezone**: timestamps stored with local offset; display vs. stored timezone is not separated.
-- **In-progress sessions**: closed at refresh time using `min(now, endMillis)`, may shift with rapid refresh.
+- **In-progress sessions**: closed at refresh time using `min(now, endMillis)`. Returning to the app now refreshes, so the close time moves to that moment.
 - **Windows build environment (local)**: Android build requires `JAVA_HOME` = JDK 17 (Android Studio's bundled JBR 25 breaks the CMake/native step), `android/local.properties` with `sdk.dir`, and `nodeLinker: hoisted` in `pnpm-workspace.yaml` (pnpm 11 ignores non-auth settings in `.npmrc`). Fabric codegen object paths still exceed Windows `MAX_PATH` (260), so it also needs: Windows `LongPathsEnabled=1` (HKLM), a long-path-aware Ninja >= 1.12.0 wired via `-DCMAKE_MAKE_PROGRAM` + `-DCMAKE_OBJECT_PATH_MAX=1024` in `android/app/build.gradle`, and `reactNativeArchitectures=arm64-v8a` to cut native build time ~4x.
 
 # Important Decisions
@@ -123,3 +124,10 @@ Storage key: `@app-usage-tracker/sessions`.
 - **2026-10-04** — Android back gesture: `BackHandler` pops session overlay first, then app detail, exits only at top level. `tsc` exit 0.
 - **2026-10-04** — Docs synced to code: overview HTML (5 tabs, delta sync, no export), dashboard HTML (v2.0, export items cut), `TRACE-SPEC-TH.md` (new rules/structure/phases/criteria), roadmap (removed export/import/schema lines, sleep policy done). Removed dead export helpers from `lib/usage.ts`. `tsc` 0 + tests 10/10.
 - **2026-10-04** — Renamed the app from `app-usage-tracker` to **TRACE** (`app.json` `expo.name` + `android/app/src/main/res/values/strings.xml` `app_name`; verified `application-label:'TRACE'`). Built a standalone release APK: `android/app/build/outputs/apk/release/app-release.apk` (30 MB, arm64-v8a, signed with the debug keystore) and copied it to the project root as `TRACE-1.0.0.apk` for sideloading. `assembleRelease` takes ~3m20s.
+- **2026-10-10** — Removed daily 21:00 notification. Dropped `expo-notifications`, `notifyDaily`, settings toggle, and the notification deep-link. Review HTML no longer lists the stale 21:00 total as an open issue.
+- **2026-10-10** — History splits sessions across hours, one foreground app, stable `-live` session ids, Apps period วันนี้/7/30, finance and media categories, manual category, exclude app, history search, daily goal bar, debug panel removed. Package id and release keystore still waiting on the owner.
+- **2026-10-10** — `AppIcon` loads the installed app icon via `UsageAccessModule.getAppIcon` (PNG data URI, cached). Category glyph remains the fallback. Needs a native rebuild.
+- **2026-10-10** — Split `App.tsx` into `components/` (one file per screen, plus `ui.tsx` and `theme.ts`). Shell stays in `App.tsx`. `tsc` exit 0.
+- **2026-10-10** — Removed dead code: commented category filter and manual category (`catLabel`, `categoryOverrides`), unused calendar `Timeline`, and unread debug counters `queryMs` / `storageKB`.
+- **2026-10-10** — Removed daily goal and exclude-app entirely: settings controls, Today goal bar, app-detail exclude button, and the `dailyGoalHours` / `excluded` prefs.
+- **2026-10-10** — Realism pass from `HTML/usage-realism/10102026-usage-realism-review.html`: first sync and later gaps follow retention (unlimited backfill 90 days), coalesce keeps counted durations, hero progress bar removed, categories split into video/shopping with package rules, yesterday compare is same-hour and hidden when yesterday is empty, app detail uses the summary period, timeline caption, "เซสชัน" wording, OEM launcher blocklist, foreground refresh, top-app insight, floored durations, on-device accuracy note. Launcher blocklist needs a native rebuild.

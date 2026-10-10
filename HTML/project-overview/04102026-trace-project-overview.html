@@ -113,7 +113,7 @@
     <div class="stat"><div class="k">หน้าแอปที่ใช้</div><div class="v">ค้นหา / sort / filter หมวด / หน้า detail รายแอป</div></div>
     <div class="stat"><div class="k">หน้าประวัติ</div><div class="v">รวมเป็นรายชั่วโมง (แตะขยายดู session) + session overlay</div></div>
     <div class="stat"><div class="k">หน้าปฏิทิน</div><div class="v">month grid / day detail / timeline 24 ชม. / top apps</div></div>
-    <div class="stat"><div class="k">หน้าตั้งค่า</div><div class="v">Dark mode / แจ้งเตือนรายวัน / retention / TH-EN / debug / เปิด Usage Access</div></div>
+    <div class="stat"><div class="k">หน้าตั้งค่า</div><div class="v">Dark mode / retention / TH-EN / debug / เปิด Usage Access (แจ้งเตือนรายวันตัดออก 10/10/2026)</div></div>
   </div>
   <div class="card">
     <ul>
@@ -127,12 +127,12 @@
   <h2>3. สถาปัตยกรรม</h2>
   <p class="muted">แอปชั้นเดียว (client only) ไม่มี backend ไม่มี network call สำหรับข้อมูลการใช้งาน</p>
   <pre>index.ts  →  registerRootComponent(App)
-App.tsx   →  UI 5 tabs + navigation state + load / refresh / prefs / notifications
+App.tsx   →  UI 5 tabs + navigation state + load / refresh / prefs
 │
 ├─ lib/usage.ts        →  model, repo, merge/coalesce, lastSync, date &amp; duration utils (+ vitest)
 ├─ lib/usageBridge.ts  →  JS bridge ไป native module (Android เท่านั้น)
 ├─ lib/categories.ts   →  หมวดแอป (Social/Games/Work/Other) + day helpers
-└─ lib/prefs.ts        →  theme/lang/retention/notify prefs + ชุดข้อความ TH-EN
+└─ lib/prefs.ts        →  theme/lang/retention prefs + ชุดข้อความ TH-EN
         │
         └─ android/.../UsageAccessModule.kt   →  query UsageStatsManager, pairing+coalesce,
                                                   allowlist, หักเวลาจอดับ, เปิด Settings
@@ -157,7 +157,7 @@ App.tsx   →  UI 5 tabs + navigation state + load / refresh / prefs / notificat
     <tr><td>ภาษา</td><td>TypeScript (strict)</td></tr>
     <tr><td>Native</td><td>Kotlin — <code>UsageAccessModule</code> + <code>UsageStatsManager</code></td></tr>
     <tr><td>Storage</td><td><code>@react-native-async-storage/async-storage</code></td></tr>
-    <tr><td>Safe-area / แจ้งเตือน</td><td>react-native-safe-area-context, expo-notifications</td></tr>
+    <tr><td>Safe-area</td><td>react-native-safe-area-context</td></tr>
     <tr><td>Test</td><td>vitest (<code>pnpm test</code>) · typecheck (<code>pnpm typecheck</code>)</td></tr>
     <tr><td>Package manager</td><td><strong>pnpm</strong> (<code>pnpm-lock.yaml</code>)</td></tr>
   </table>

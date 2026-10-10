@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TRACE — Usage realism review</title>
+<style>
+  :root { --ink:#17231f; --muted:#66736c; --green:#2f6f5e; --pale:#e8f1ec; --line:#dce6df; --warm:#f5efe5; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:"Segoe UI","Sarabun",system-ui,sans-serif; background:var(--warm); color:var(--ink); line-height:1.55; }
+  .wrap { max-width:920px; margin:0 auto; padding:32px 20px 64px; }
+  header { background:var(--green); color:#fff; border-radius:20px; padding:28px 26px; margin-bottom:22px; }
+  header .eyebrow { font-size:12px; font-weight:800; letter-spacing:2px; color:#b9d1c4; }
+  h1 { margin:6px 0 8px; font-size:28px; line-height:1.2; }
+  header p { margin:0; color:#d8e8de; }
+  h2 { font-size:18px; margin:22px 0 8px; }
+  p, li { font-size:15px; }
+  .note { background:var(--pale); border-radius:12px; padding:12px 14px; }
+  table { width:100%; border-collapse:collapse; background:#fff; border-radius:12px; overflow:hidden; font-size:14px; }
+  th, td { text-align:left; vertical-align:top; padding:8px 10px; border-bottom:1px solid var(--line); }
+  th { background:var(--pale); font-size:12px; }
+  code { font-size:12px; background:#eef3f0; padding:0 4px; border-radius:4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="eyebrow">TRACE · 10 Oct 2026</div>
+  <h1>รายการความจริงในการใช้งาน — แก้แล้ว</h1>
+  <p>แจ้งเตือน 21:00 ตัดออกก่อนหน้านี้ รายการที่เหลือในรายงานนี้ลงโค้ดแล้ว</p>
+</header>
+
+<p class="note">Launcher blocklist อยู่ใน Kotlin ต้อง build Android ใหม่ถึงจะมีผล ส่วนที่เหลือเป็น JavaScript รีโหลด Metro ได้</p>
+
+<h2>สิ่งที่เปลี่ยน</h2>
+<table>
+  <thead><tr><th>ข้อ</th><th>พฤติกรรมตอนนี้</th></tr></thead>
+  <tbody>
+    <tr><td>อ่านครั้งแรก</td><td>ดึงย้อนหลังเท่า retention อย่างน้อย 7 วัน ถ้าเลือกไม่จำกัดจะดึง 90 วัน</td></tr>
+    <tr><td>ช่องว่างหลังไม่ได้เปิดแอป</td><td>ไม่ตัดเหลือ 7 วันอีกต่อไป ย้อนได้เท่า retention</td></tr>
+    <tr><td>รวม session</td><td><code>coalesceSessions</code> บวก duration ที่นับไว้แล้ว ไม่ใช้ช่วงกำแพงเวลาแทนเวลาจอดับ</td></tr>
+    <tr><td>แถบวันนี้</td><td>เอาออก เพราะเต็มหลังใช้ประมาณ 3 นาที และไม่ใช่เป้าของวัน</td></tr>
+    <tr><td>หมวด</td><td>แยก Video และ Shopping จับ package ที่รู้จัก YouTube / Shopee / TikTok (<code>com.ss.android.ugc.trill</code>) Settings และ Clock ไม่ไปอยู่หมวดงาน</td></tr>
+    <tr><td>เทียบเมื่อวาน</td><td>เทียบถึงชั่วโมงเดียวกัน และซ่อนเมื่อยังไม่มีข้อมูลเมื่อวาน</td></tr>
+    <tr><td>หน้ารายละเอียดแอป</td><td>ใช้ชุด session เดียวกับแถวที่กดเข้ามา</td></tr>
+    <tr><td>ไทม์ไลน์</td><td>ยังวาดตามนาฬิกา และมีข้อความว่าแท่งคือช่วงอยู่หน้าจอ ไม่ใช่เวลาหลังหักจอดับ</td></tr>
+    <tr><td>คำว่าครั้งที่เปิด</td><td>เปลี่ยนเป็น “เซสชัน”</td></tr>
+    <tr><td>Launcher</td><td>เพิ่ม Xiaomi, Oppo, Vivo, Pixel, Huawei, OnePlus, Lawnchair และตัวอื่นใน blocklist</td></tr>
+    <tr><td>กลับเข้าแอป</td><td>รีเฟรชเมื่อ <code>AppState</code> เป็น active</td></tr>
+    <tr><td>สรุปวันนี้</td><td>แสดงแอปที่ใช้เวลามากสุด ไม่ซ้ำยอดหมวด</td></tr>
+    <tr><td>การปัดนาที</td><td><code>formatDuration</code> ปัดลง ตัวเลขใหญ่บนหน้าวันนี้แสดงวินาทีจริง</td></tr>
+    <tr><td>ไอคอนแอป</td><td><code>getAppIcon</code> ดึงไอคอนจริงจากแอปที่ติดตั้ง ถ้าไม่มีจึงใช้สัญลักษณ์หมวด</td></tr>
+    <tr><td>ข้อจำกัด</td><td>หน้าความเป็นส่วนตัวบอกว่าเป็น event เปิด–ปิดแอป, แบ่งจอ/PiP อาจนับซ้อน, บางยี่ห้อตัด event เว็บมีข้อความว่าอ่าน Usage Access ไม่ได้</td></tr>
+  </tbody>
+</table>
+
+<h2>ควรปรับ — ลงโค้ดแล้ว</h2>
+<ul>
+  <li>ประวัติแบ่ง session ที่คร่อมชั่วโมงตามสัดส่วนเวลาที่นับได้</li>
+  <li>event เปิดซ้ำก่อนปิด จะปิดช่วงแรกไว้ ไม่ทับหาย</li>
+  <li>นับแอป foreground ได้ทีละแอป แบ่งจอหรือ PiP ไม่ถูกนับซ้อน</li>
+  <li>Session ที่ยังเปิดอยู่ใช้ id ลงท้าย <code>-live</code> รีเฟรชแล้วแทนที่แถวเดิม</li>
+  <li>แท็บแอปเลือก วันนี้ / 7 วัน / 30 วัน</li>
+  <li>มีหมวดการเงินและสื่อ สำหรับธนาคาร เพลง กล้อง</li>
+  <li>เอาแผงดีบักออกจากหน้าตั้งค่า</li>
+</ul>
+<p class="note">ยังไม่เปลี่ยน package <code>com.anonymous.appusagetracker</code> และ debug keystore จนกว่าจะมีชื่อแอปและคีย์ของเจ้าของโปรเจกต์</p>
+
+<h2>ควรเพิ่ม — ลงโค้ดแล้ว</h2>
+<ul>
+  <li>ช่วงเวลาในแท็บแอปตรงกับหน้ารายละเอียด</li>
+  <li>หน้ารายละเอียดกดไม่นับแอปนี้ หน้าตั้งค่ากดเพื่อนับกลับ</li>
+  <li>เลือกหมวดเองแล้วจำบนเครื่อง</li>
+  <li>ค้นหาในประวัติ ตามคำอธิบายด้านล่าง</li>
+  <li>เป้าวันนี้ 1/2/4/6 ชม. แสดงแถบบนหน้าวันนี้ ไม่แจ้งเตือน</li>
+</ul>
+
+<h2>กรองประวัติตามแอป</h2>
+<p>ช่องค้นหาบนหน้าประวัติเทียบชื่อแอปและ package รายการที่เหลือถูกจัดกล่องวันและชั่วโมงใหม่ ยอดชั่วโมงจึงเป็นของแอปที่ค้นเท่านั้น เคลียร์ช่องค้นหาแล้วประวัติทั้งหมดกลับมา ข้อมูลในเครื่องไม่ถูกลบ</p>
+
+<h2>ยังไม่ควรเพิ่ม</h2>
+<ul>
+  <li>Cloud sync, export และ Accessibility Service ขัดกับที่ตัดสินใจไว้แล้ว</li>
+</ul>
+
+<h2>ตอนทดสอบบนเครื่อง</h2>
+<ul>
+  <li>ติดตั้งหรือ rebuild หลังแก้ Kotlin แล้วเปิด Usage Access</li>
+  <li>วันติดตั้งควรเห็นวันก่อนหน้าในปฏิทิน ถ้า Android ยังเก็บ event อยู่</li>
+  <li>เปิด YouTube หรือ LINE แล้วล็อกจอ เวลารวมต้องไม่กินช่วงล็อกจอ แม้จะรีเฟรชซ้ำ</li>
+  <li>สลับออกแล้วกลับเข้า TRACE ตัวเลขควรอัปเดตโดยไม่ต้องกดรีเฟรช</li>
+  <li>แถวแอปกับหน้ารายละเอียดต้องเป็นยอดช่วงเดียวกัน</li>
+  <li>ไม่มีแถบเขียวที่เต็มหลังใช้ไม่กี่นาที และไม่มีสวิตช์แจ้งเตือน 21:00</li>
+</ul>
+</div>
+</body>
+</html>

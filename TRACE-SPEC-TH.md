@@ -23,7 +23,7 @@ TRACE เป็นแอป Android-first สำหรับติดตาม�
 - หน้าจอรายการแอป (ค้นหา, sort, filter หมวด, หน้า detail รายแอป)
 - หน้าจอ History รวมเป็นรายชั่วโมง + session overlay
 - หน้าจอ Calendar (month grid, day detail, timeline 24 ชม., top apps)
-- หน้าจอ Settings (dark mode, แจ้งเตือนรายวัน, retention, TH/EN, debug)
+- หน้าจอ Settings (dark mode, retention, TH/EN, debug) — แจ้งเตือนรายวันตัดออก 10/10/2026
 - Local storage ด้วย AsyncStorage + prune ตาม retention
 - Delta sync ด้วย `lastSync` (อ่านเฉพาะ event ใหม่, upsert ตาม id)
 - Android native module `UsageAccessModule`
@@ -140,7 +140,7 @@ TRACE เป็นแอป Android-first สำหรับติดตาม�
 ### Sync rule (JS)
 
 1. จำ `lastSync` ทุกครั้งที่ refresh สำเร็จ
-2. อ่านเฉพาะ event ตั้งแต่ `lastSync − 60 วินาที` (ย้อนสูงสุด 7 วัน)
+2. อ่าน event ตั้งแต่ `lastSync − 60 วินาที` ย้อนได้เท่า retention (ไม่จำกัด = 90 วัน, อย่างน้อย 7 วัน) ครั้งแรกที่ยังไม่มี `lastSync` ดึงทั้งช่วงนี้ ไม่ใช่แค่หลังเที่ยงคืน
 3. `mergeWindow` เก็บ session นอก window + upsert ตาม id
 4. `coalesceSessions` รวม gap ≤ 30 วินาที + `pruneSessions` ตาม retention ทุกครั้งที่ save
 
@@ -155,6 +155,15 @@ TRACE เป็นแอป Android-first สำหรับติดตาม�
 ```text
 app-usage-tracker/
 ├── App.tsx
+├── components/
+│   ├── Today.tsx
+│   ├── Apps.tsx
+│   ├── HistoryList.tsx
+│   ├── CalendarView.tsx
+│   ├── Settings.tsx
+│   ├── SessionOverlay.tsx
+│   ├── ui.tsx
+│   └── theme.ts
 ├── app.json
 ├── package.json
 ├── pnpm-lock.yaml
@@ -180,11 +189,12 @@ app-usage-tracker/
 
 ### หน้าที่ของไฟล์หลัก
 
-- `App.tsx`: UI 5 tabs, navigation state, load/refresh, prefs, notifications
+- `App.tsx`: shell, 5 tabs, navigation state, load/refresh, prefs
+- `components/`: หน้าจอแต่ละแท็บ, ชิ้นส่วนร่วม (`ui.tsx`), สไตล์ (`theme.ts`)
 - `lib/usage.ts`: model, local storage, merge/coalesce, lastSync, date utility, duration formatting
 - `lib/usageBridge.ts`: JavaScript interface ไปยัง Android native module
 - `lib/categories.ts`: หมวดแอป + day helpers
-- `lib/prefs.ts`: theme/lang/retention/notify prefs + ข้อความ TH-EN
+- `lib/prefs.ts`: theme/lang/retention prefs + ข้อความ TH-EN
 - `lib/usage.test.ts`: unit tests (vitest)
 - `UsageAccessModule.kt`: อ่าน UsageStatsManager, pairing/coalesce, allowlist, หักเวลาจอดับ, เปิด Settings
 - `UsageAccessPackage.kt`: ลงทะเบียน native module

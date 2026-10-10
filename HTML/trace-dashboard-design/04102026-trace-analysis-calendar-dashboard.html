@@ -123,11 +123,11 @@ tr:last-child td { border-bottom: none; }
     <li><strong>Today</strong> — yesterday +/-, 7-day sparkline, category stacked bar, insight card <span class="tag tag-medium">DONE</span></li>
     <li><strong>Apps</strong> — search, sort x4, category filter, per-app detail <span class="tag tag-medium">DONE</span></li>
     <li><strong>History</strong> — SectionList virtualized, session overlay, pull-to-refresh <span class="tag tag-medium">DONE</span></li>
-    <li><strong>Settings</strong> — dark mode, daily notification (live total), retention prune, TH/EN, debug <span class="tag tag-medium">DONE</span></li>
+    <li><strong>Settings</strong> — dark mode, retention prune, TH/EN, debug. Daily notification removed 10 Oct 2026 <span class="tag tag-medium">DONE</span></li>
     <li><strong>Freeze fixes</strong> — stagger cap, top-20 lists, refresh guard, memo total <span class="tag tag-medium">DONE</span></li>
     <li><strong>Data quality</strong> — launcher blocklist + launchable allowlist, 30s coalesce (JS+Kotlin), com.* filter, delta sync (lastSync), screen-off subtraction, 2000-session cap <span class="tag tag-medium">DONE</span></li>
     <li><strong>Safe-area</strong> — SafeAreaProvider + insets + edge-to-edge <span class="tag tag-medium">DONE</span></li>
-    <li><strong>Round 2 fixes</strong> — overlay view-app from all days, calendar Today button, notification deep-link to Today, stale-data banner on revoked permission, accessibility labels, vitest suite (10 tests) <span class="tag tag-medium">DONE</span></li>
+    <li><strong>Round 2 fixes</strong> — overlay view-app from all days, calendar Today button, stale-data banner on revoked permission, accessibility labels, vitest suite (10 tests) <span class="tag tag-medium">DONE</span></li>
     <li><strong>Not done</strong> — peak-hour indicator, per-app usage limit alerts, real app icons (no Expo API), DateTimePicker dep (month nav covers it), SQLite migration, Expo Router split, background sync <span class="tag tag-low">LATER</span></li>
   </ol>
 </div>
@@ -294,7 +294,7 @@ tr:last-child td { border-bottom: none; }
 </div>
 
 <h2><span>04</span> Settings — หน้าตั้งค่า</h2>
-<p class="section-desc">Usage Access + Appearance + Notifications + Data + Privacy + Debug (Export/Import/Clear ตัดออกแล้ว)</p>
+<p class="section-desc">Usage Access + Appearance + Data + Privacy + Debug (Export/Import/Clear และแจ้งเตือนรายวันตัดออกแล้ว)</p>
 
 <div class="grid2">
 <div class="card">
@@ -314,11 +314,9 @@ tr:last-child td { border-bottom: none; }
         <li>Toggle in settings, persist choice</li>
       </ul>
     </li>
-    <li><strong>Notification Settings</strong> <span class="tag tag-medium">MED</span>
+    <li><strong>Notification Settings</strong> <span class="tag tag-low">CUT 10 Oct 2026</span>
       <ul class="sublist">
-        <li>Daily usage summary notification</li>
-        <li>Usage limit alerts</li>
-        <li>ใช้ expo-notifications</li>
+        <li>ไม่ทำแจ้งเตือนสรุปรายวัน 21:00 และ usage limit alerts</li>
       </ul>
     </li>
     <li><strong>Data Retention Setting</strong> <span class="tag tag-medium">MED</span>
